@@ -30,11 +30,14 @@ public class iTunesSearch {
         public enum CommonKeys: String,CaseIterable{
             case
             kind,
+            trackId,
             artistName,
+            trackName,
             trackCensoredName,
             artworkUrl100,
             trackPrice,
-            price
+            price,
+            primaryGenreName
         }
 
         public enum PreviewableKeys: String,CaseIterable{

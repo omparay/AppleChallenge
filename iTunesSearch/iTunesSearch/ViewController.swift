@@ -20,18 +20,7 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
 
     //Properties
     private var alert: UIAlertController = UIAlertController(title: "Alert", message: String.empty, preferredStyle: .alert)
-    private var results: JSON?
-    private var summarized = [String:JSON]()
-    private var hasResults: Bool {
-        get {
-            if self.results != nil {
-                return true
-            } else {
-                self.displayError(withTitle: "Error...", andMessage: "No results to display.")
-                return false
-            }
-        }
-    }
+    private var summarized = [String:[SearchResult]]()
 
     //View Lifecycle
     deinit {
@@ -53,11 +42,12 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 0
+        guard let key = summarized.allKeys[section] as? String, let items = summarized[key] else { return 0 }
+        return items.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ResultCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ResultCell", for: indexPath) as! ResultCell
         return cell
     }
 
@@ -81,6 +71,11 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
                 if response.statusCode != 200 {
                     self.displayError(withTitle: "HTTP Error...", andMessage: "No Internet Connection?\nTyu again later...")
                 }
+
+                DispatchQueue.main.async {
+                    self.searchAnimation(false)
+                }
+
                 self.processResult(data)
             },
             failure: {
@@ -107,19 +102,35 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
     }
 
     private func processResult(_ data:Data){
-        guard let jsonData = Parser.jsonFrom(data: data) else {
+        var initialSummary = [String : [SearchResult]]()
+        var items = [SearchResult]()
+        var defaultImage = UIImage(systemName: "nosign")
+
+        guard
+            let jsonData = Parser.jsonFrom(data: data),
+            let rawItems = jsonData[iTunesSearch.ResultKeys.results.rawValue] as? [JSON]
+        else {
             self.displayError()
             return
         }
-        self.results = jsonData
-        DispatchQueue.main.async {
-            self.searchAnimation(false)
-            //Process and display results
+
+        for rawItem in rawItems {
+            let id = Int(String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.trackId.rawValue])) ?? 0
+            let kind = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.kind.rawValue])
+            let name = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.trackName.rawValue])
+            let artUrl = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.artworkUrl100.rawValue])
+            let genre = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.primaryGenreName.rawValue])
+            let viewUrl = String(describing: rawItem[iTunesSearch.ResultKeys.PreviewableKeys.trackViewUrl.rawValue])
+
+            if let dataUrl = URL(string: artUrl), let artData = try? Data(contentsOf: dataUrl) {
+
+            } else {
+
+            }
         }
     }
 
-    private func displayError(withTitle: String = "Ooops...",
-                              andMessage:String = "Something weird has happened.\nPlease try again."){
+    private func displayError(withTitle: String = "Ooops...", andMessage:String = "Something weird has happened.\nPlease try again."){
         DispatchQueue.main.async {
             self.alert = UIAlertController(title: withTitle, message: andMessage, preferredStyle: .alert)
             self.alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { (action) in

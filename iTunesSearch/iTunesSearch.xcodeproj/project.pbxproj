@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A78444622434B72E0042A09B /* SearchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78444612434B72E0042A09B /* SearchResult.swift */; };
 		A78B88D52434803C00952691 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78B88D42434803C00952691 /* AppDelegate.swift */; };
 		A78B88D72434803C00952691 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78B88D62434803C00952691 /* SceneDelegate.swift */; };
 		A78B88D92434803C00952691 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78B88D82434803C00952691 /* ViewController.swift */; };
@@ -37,6 +38,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A78444612434B72E0042A09B /* SearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResult.swift; sourceTree = "<group>"; };
 		A78B88D12434803C00952691 /* iTunesSearch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTunesSearch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A78B88D42434803C00952691 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A78B88D62434803C00952691 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -113,6 +115,7 @@
 				A78B88DF2434803D00952691 /* LaunchScreen.storyboard */,
 				A78B88E22434803D00952691 /* Info.plist */,
 				A78B8907243487F000952691 /* ResultCell.swift */,
+				A78444612434B72E0042A09B /* SearchResult.swift */,
 			);
 			path = iTunesSearch;
 			sourceTree = "<group>";
@@ -276,6 +279,7 @@
 			files = (
 				A78B88D92434803C00952691 /* ViewController.swift in Sources */,
 				A78B88D52434803C00952691 /* AppDelegate.swift in Sources */,
+				A78444622434B72E0042A09B /* SearchResult.swift in Sources */,
 				A78B8908243487F000952691 /* ResultCell.swift in Sources */,
 				A78B88D72434803C00952691 /* SceneDelegate.swift in Sources */,
 			);
