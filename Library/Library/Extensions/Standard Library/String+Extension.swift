@@ -25,6 +25,14 @@ public extension String{
         }
     }
 
+    init(forceCastOrEmpty: Any?){
+        if let temp = forceCastOrEmpty as? String {
+            self.init(temp)
+        } else {
+            self.init(String.empty)
+        }
+    }
+
     //MARK: - Properties
     
     static var empty:String{

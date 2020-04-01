@@ -82,6 +82,7 @@ public class iTunesSearch {
         }
         let params = String(queryStringFromDictionary: searchParams)
         let urlString = iTunesSearch.searchURL + params
+        debugPrint("iTunes: \(urlString)")
         HttpClient.sharedInstance.execute(serviceUrl: urlString, webMethod: .Get, executionHandler: handler)
     }
 }

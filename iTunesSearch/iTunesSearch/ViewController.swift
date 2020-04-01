@@ -23,13 +23,8 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
     private var summarized = [String:[SearchResult]]()
 
     //View Lifecycle
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
-        NotificationCenter.default.addObserver(self, selector: #selector(handleTextChanged(sender:)), name: UITextField.textDidChangeNotification, object: self.criteriaField)
     }
 
     //Datasource
@@ -48,17 +43,18 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ResultCell", for: indexPath) as! ResultCell
+        let kindString = String(describing: summarized.allKeys[indexPath.section])
+        guard let resultItems = summarized[kindString] else { return cell }
+        let resultItem = resultItems[indexPath.row]
+        cell.artworkImage.image = UIImage(data: resultItem.artworkData)
+        cell.nameField.text = resultItem.name
+        cell.genreField.text = resultItem.genre
+        cell.urlField.text = resultItem.linkUrl
         return cell
     }
 
-    //Delegates
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //Mark this as a favorite...
-    }
-
-    //Notification Handlers
-    @objc func handleTextChanged(sender: NSNotification){
-        guard let field = sender.object as? UITextField, let text = field.text else { return }
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        guard let text = textField.text else { return }
         debugPrint("Search Text: \(text)")
         searchAnimation()
         iTunesSearch.performSearch(withTerm: text, handler: (
@@ -72,12 +68,8 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
                     self.displayError(withTitle: "HTTP Error...", andMessage: "No Internet Connection?\nTyu again later...")
                 }
 
-                DispatchQueue.main.async {
-                    self.searchAnimation(false)
-                }
-
                 self.processResult(data)
-            },
+        },
             failure: {
                 (httpResponse,systemError,errorMessage) in
                 guard let message = errorMessage else {
@@ -85,8 +77,18 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
                     return
                 }
                 self.displayError(withTitle: "Error...", andMessage: message)
-            })
-        )
+        }))
+    }
+
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return false
+    }
+
+
+    //Delegates
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //Mark this as a favorite...
     }
 
     //Private Methods
@@ -102,31 +104,55 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
     }
 
     private func processResult(_ data:Data){
-        var initialSummary = [String : [SearchResult]]()
-        var items = [SearchResult]()
-        var defaultImage = UIImage(systemName: "nosign")
+        let defaultImage = UIImage(systemName: "nosign")!
+        var imageData = defaultImage.jpegData(compressionQuality: 1.0)
 
         guard
             let jsonData = Parser.jsonFrom(data: data),
             let rawItems = jsonData[iTunesSearch.ResultKeys.results.rawValue] as? [JSON]
-        else {
-            self.displayError()
-            return
+            else {
+                self.displayError()
+                return
         }
 
         for rawItem in rawItems {
-            let id = Int(String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.trackId.rawValue])) ?? 0
-            let kind = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.kind.rawValue])
-            let name = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.trackName.rawValue])
-            let artUrl = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.artworkUrl100.rawValue])
-            let genre = String(describing: rawItem[iTunesSearch.ResultKeys.CommonKeys.primaryGenreName.rawValue])
-            let viewUrl = String(describing: rawItem[iTunesSearch.ResultKeys.PreviewableKeys.trackViewUrl.rawValue])
 
-            if let dataUrl = URL(string: artUrl), let artData = try? Data(contentsOf: dataUrl) {
+            let kind = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.CommonKeys.kind.rawValue])
+            let name = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.CommonKeys.trackName.rawValue])
+            let genre = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.CommonKeys.primaryGenreName.rawValue])
+            let artUrl = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.CommonKeys.artworkUrl100.rawValue])
+            let viewUrl = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.PreviewableKeys.trackViewUrl.rawValue])
 
-            } else {
+
+            if let dataUrl = URL(string: artUrl) {
+
+                if let artData = try? Data(contentsOf: dataUrl) {
+                    imageData = artData
+                }
 
             }
+
+            if let id = rawItem[iTunesSearch.ResultKeys.CommonKeys.trackId.rawValue] as? Int {
+
+                let resultItem = SearchResult(id: id, kind: kind, name: name, artworkUrl: artUrl, artworkData: imageData!, genre: genre, linkUrl: viewUrl)
+
+                if summarized.allKeys.contains(where: { (item) -> Bool in return kind == String(describing: item) }){
+                    if let kindItems = summarized[kind] {
+                        let newItems = kindItems + [resultItem]
+                        summarized[kind] = newItems
+                    } else {
+                        summarized[kind] = [resultItem]
+                    }
+                } else {
+                    summarized[kind] = [resultItem]
+                }
+            }
+
+        }
+
+        DispatchQueue.main.async {
+            self.resultsTableView.reloadData()
+            self.searchAnimation(false)
         }
     }
 
