@@ -7,7 +7,9 @@ This challenge was somewhat similar to the challenge given to me by Krikey which
   - Artwork
   - Genre
   - URL
+  
 2 The KrikeyChallenge had an expectation of animations (transitions) from screen to screen which is not required in AppleChallenge
+
 3 The AppleChallenge has an expectation for maintaining a persistence of items marked as favorites which was not needed in the KrikeyChallenge
 
 Despite the differences both apps share one overriding feature: they both access the iTunes Search API.
