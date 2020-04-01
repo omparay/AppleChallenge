@@ -11,7 +11,6 @@ import Library
 
 class ResultCell: UITableViewCell {
 
-    @IBOutlet weak var isFavoriteImage: UIImageView!
     @IBOutlet weak var artworkImage: UIImageView!
     @IBOutlet weak var nameField: UILabel!
     @IBOutlet weak var genreField: UILabel!
@@ -28,7 +27,7 @@ class ResultCell: UITableViewCell {
                             self.artworkImage.image = image
                         }
                     },failure: { (httpResponse,systemError,errorMessage) in
-                        debugPrint("Error: \(errorMessage)")
+                        debugPrint("Error: \(String(describing: errorMessage))")
                     }
                 ))
             }

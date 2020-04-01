@@ -27,6 +27,14 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
         super.viewDidLoad()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if let archivedItems = unArchive() {
+            summarized["Favorites"] = archivedItems
+        }
+        resultsTableView.reloadData()
+    }
+
     //Datasource
     func numberOfSections(in tableView: UITableView) -> Int {
         return summarized.allKeys.count
@@ -46,7 +54,6 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
         let kindString = String(describing: summarized.allKeys[indexPath.section])
         guard let resultItems = summarized[kindString] else { return cell }
         let resultItem = resultItems[indexPath.row]
-        cell.artworkImage.image = UIImage(data: resultItem.artworkData)
         cell.nameField.text = resultItem.name
         cell.genreField.text = resultItem.genre
         cell.urlField.text = resultItem.linkUrl
@@ -89,10 +96,45 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
 
     //Delegates
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //Mark this as a favorite...
+        guard let key = summarized.allKeys[indexPath.section] as? String, let items = summarized[key] else { return }
+        let item = items[indexPath.row]
+        if summarized.keys.contains("Favorites") {
+            if let items = summarized["Favorites"] {
+                summarized["Favorites"] = items + [item]
+                archive(items: items + [item])
+            } else {
+                summarized["Favorites"] = [item]
+                archive(items: [item])
+            }
+        } else {
+            summarized["Favorites"] = [item]
+            archive(items: [item])
+        }
+        self.resultsTableView.reloadData()
     }
 
     //Private Methods
+    private func archive(items: [SearchResult]){
+        let archiveData = items.map {
+            $0.encode()
+        }
+        UserDefaults.standard.setValue(archiveData, forKey: "MarkedFavorites")
+        UserDefaults.standard.synchronize()
+    }
+
+    private func unArchive() -> [SearchResult]? {
+        var results = [SearchResult]()
+        guard
+            let archived = UserDefaults.standard.value(forKey: "MarkedFavorites") as? [Data]
+        else { return nil }
+        for item in archived {
+            if let decoded = SearchResult(data: item) {
+                results.append(decoded)
+            }
+        }
+        return results
+    }
+
     private func searchAnimation(_ start: Bool=true){
         DispatchQueue.main.async {
             self.searchActivity.isHidden = !start
@@ -105,10 +147,10 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
     }
 
     private func processResult(_ data:Data){
-        summarized = [String:[SearchResult]]()
-        
-        let defaultImage = UIImage(systemName: "nosign")!
-        let imageData = defaultImage.jpegData(compressionQuality: 1.0)
+
+        var lastFaves: [SearchResult]?
+
+        lastFaves = summarized["Favorites"]
 
         guard
             let jsonData = Parser.jsonFrom(data: data),
@@ -116,6 +158,12 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
             else {
                 self.displayError()
                 return
+        }
+
+        summarized = [String:[SearchResult]]()
+
+        if let faves = lastFaves {
+            summarized["Favorites"] = faves
         }
 
         for rawItem in rawItems {
@@ -128,7 +176,7 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
 
             if let id = rawItem[iTunesSearch.ResultKeys.CommonKeys.trackId.rawValue] as? Int {
 
-                let resultItem = SearchResult(id: id, kind: kind, name: name, artworkUrl: artUrl, artworkData: imageData!, genre: genre, linkUrl: viewUrl)
+                let resultItem = SearchResult(id: id, kind: kind, name: name, artworkUrl: artUrl, genre: genre, linkUrl: viewUrl)
 
                 if summarized.allKeys.contains(where: { (item) -> Bool in return kind == String(describing: item) }){
                     if let kindItems = summarized[kind] {
@@ -160,5 +208,4 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
             self.present(self.alert, animated: true, completion: nil)
         }
     }
-
 }
