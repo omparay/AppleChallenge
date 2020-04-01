@@ -50,6 +50,7 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
         cell.nameField.text = resultItem.name
         cell.genreField.text = resultItem.genre
         cell.urlField.text = resultItem.linkUrl
+        cell.imageUrl = resultItem.artworkUrl
         return cell
     }
 
@@ -104,8 +105,10 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
     }
 
     private func processResult(_ data:Data){
+        summarized = [String:[SearchResult]]()
+        
         let defaultImage = UIImage(systemName: "nosign")!
-        var imageData = defaultImage.jpegData(compressionQuality: 1.0)
+        let imageData = defaultImage.jpegData(compressionQuality: 1.0)
 
         guard
             let jsonData = Parser.jsonFrom(data: data),
@@ -122,15 +125,6 @@ class ViewController: UIViewController, UITextFieldDelegate, UITableViewDelegate
             let genre = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.CommonKeys.primaryGenreName.rawValue])
             let artUrl = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.CommonKeys.artworkUrl100.rawValue])
             let viewUrl = String(forceCastOrEmpty: rawItem[iTunesSearch.ResultKeys.PreviewableKeys.trackViewUrl.rawValue])
-
-
-            if let dataUrl = URL(string: artUrl) {
-
-                if let artData = try? Data(contentsOf: dataUrl) {
-                    imageData = artData
-                }
-
-            }
 
             if let id = rawItem[iTunesSearch.ResultKeys.CommonKeys.trackId.rawValue] as? Int {
 

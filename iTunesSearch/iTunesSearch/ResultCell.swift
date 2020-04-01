@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Library
 
 class ResultCell: UITableViewCell {
 
@@ -15,6 +16,24 @@ class ResultCell: UITableViewCell {
     @IBOutlet weak var nameField: UILabel!
     @IBOutlet weak var genreField: UILabel!
     @IBOutlet weak var urlField: UILabel!
+
+    var imageUrl: String? {
+        willSet(newValue) {
+            if let urlString = newValue, let url = URL(string: urlString) {
+                debugPrint("Art Image: \(urlString)")
+                HttpClient.sharedInstance.execute(serviceUrl: url, webMethod: Method.Get, executionHandler: (
+                    success: { (httpResponse,httpData) in
+                        guard let imageData = httpData, let image = UIImage(data: imageData) else { return }
+                        DispatchQueue.main.async {
+                            self.artworkImage.image = image
+                        }
+                    },failure: { (httpResponse,systemError,errorMessage) in
+                        debugPrint("Error: \(errorMessage)")
+                    }
+                ))
+            }
+        }
+    }
 
     override func awakeFromNib() {
         super.awakeFromNib()
