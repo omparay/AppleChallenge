@@ -1,0 +1,14 @@
+{
+    "activity":true,
+    "answer":true,
+    "application":true,
+    "assignment":true,
+    "entry":true,
+    "journal":true,
+    "lesson":true,
+    "notification":true,
+    "profile":true,
+    "question":true,
+    "report":true,
+    "resource":true
+}
